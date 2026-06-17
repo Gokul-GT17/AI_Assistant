@@ -1,9 +1,9 @@
 fastapi
 uvicorn
-streamlit
 pandas
+numpy
 python-dotenv
 langchain
-langchain-core
 langchain-groq
-requests
+langchain-experimental
+tabulate

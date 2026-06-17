@@ -1,200 +1,459 @@
-# AI Assistant — Support Ticket QA & Anomaly Detection
+# AI Assistant for Ticket Support
 
-Lightweight assistant for analyzing support tickets (CSV), answering natural-language questions via Groq LLM, and detecting simple rule-based anomalies.
+## Overview
 
-## Quick summary
+AI Assistant for Ticket Support is a Generative AI-powered ticket analytics system that enables users to query customer support ticket data using natural language and automatically detect anomalies in ticket resolution patterns.
 
-- Backend: `app.py` (FastAPI)
-- Query logic: `query_engine.py` (Groq client)
-- Anomalies: `anomaly_detection.py` (CSV + Pandas rules)
-- UI: `streamlit_ui.py` (Streamlit)
-- Data: `support_tickets.csv`
+The system combines FastAPI, Streamlit, Pandas, LangChain, Groq LLM, and a Pandas DataFrame Agent to provide intelligent insights from support ticket datasets without requiring SQL knowledge.
 
-## Requirements
+---
+# Setup Instructions
 
-- Python 3.10+
-- pip
-- `GROQ_API_KEY` set in a `.env` file
+## 1. Clone Repository
 
-## Files
+```bash
+git clone <repository-url>
+cd project
+```
 
-- `app.py` — exposes `/` (health), `/ask` (POST), and `/anomalies` (GET)
-- `query_engine.py` — loads `support_tickets.csv`, builds a prompt and calls Groq (`llama-3.3-70b-versatile` by default)
-- `anomaly_detection.py` — flags unresolved High/Critical tickets and long resolution times
-- `streamlit_ui.py` — simple frontend that calls the API at `http://localhost:8000`
-- `requirements.txt` — dependencies
+---
 
-## Setup
+## 2. Create Virtual Environment
 
-1. Create and activate a virtual environment
+Windows:
 
-Windows
-```powershell
+```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-macOS / Linux
+Linux/Mac:
+
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-2. Install dependencies
+---
+
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Add `.env` with your Groq API key
+---
 
-```
+## 4. Configure Environment Variables
+
+Create a `.env` file:
+
+```env
 GROQ_API_KEY=your_groq_api_key
 ```
 
-4. Ensure `support_tickets.csv` is present in the project root.
+Obtain an API key from Groq.
 
-## Run
+---
 
-Start the FastAPI server:
+## 5. Run FastAPI Backend
 
 ```bash
 uvicorn app:app --reload
 ```
 
-Start the Streamlit UI (in another terminal):
+Backend URL:
+
+```text
+http://localhost:8000
+```
+
+API Documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+## 6. Run Streamlit Frontend
 
 ```bash
 streamlit run streamlit_ui.py
 ```
 
-Access the UI at http://localhost:8501 and the API at http://localhost:8000
-
-## API (examples)
-
-Health check
-
-```bash
-curl http://localhost:8000/
-```
-
-Ask a question
-
-```bash
-curl -s -X POST http://localhost:8000/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question":"How many unresolved high priority tickets are there?"}'
-```
-
-Detect anomalies
-
-```bash
-curl http://localhost:8000/anomalies
-```
-
-Example anomalies response
-
-```json
-[ { "ticket_id": "123", "issue": "Unresolved high-priority ticket" } ]
-```
-
-## Expected CSV schema (minimum)
-
-The code expects at least these columns in `support_tickets.csv`:
-
-- `ticket_id` — unique identifier
-- `priority` — values like `Low`, `Medium`, `High`, `Critical`
-- `status` — e.g. `Open`, `In Progress`, `Resolved`
-- `resolution_time_hrs` — numeric, hours to resolve (may be blank)
-
-Example single-row CSV (header + row):
-
-```csv
-ticket_id,priority,status,resolution_time_hrs
-TKT-001,High,Open,
-```
-Example Queries
-Query 1
-
-Input
-
-How many tickets are currently open?
-
-Output
-
-To find the number of tickets that are currently open, we need to look at the 'status' column in the dataset.
-
-There are 3 tickets with the status 'Open':
-
-TKT-005
-TKT-007
-TKT-010
-Therefore, the answer is 3. There are 3 tickets that are currently open.
-Query 2
-
-Input
-
-Which agent resolved the most tickets this month?
-
-Output
-
-Based on the sample data, the agent who resolved the most tickets this month is AGT-07 and AGT-06 and AGT-09, they all resolved one ticket each.
-Query 3
-
-Input
-
-Show me all Critical tickets not resolved within 12 hours.
-
-Output
-
-  ticket_id       created_at category priority    status  response_time_hrs  resolution_time_hrs agent_id  customer_rating                             issue_summary
-3   TKT-004  2024-03-09 09:59    Billing     High  Resolved                0.6                 10.7   AGT-07              4.0  Subscription not activated after payment
-
- There is only one Critical (High) ticket that was resolved but took more than 12 hours to resolve.
-Query 4
-
-Input
-
-What is the average customer rating for Technical category tickets?
-
-Output
-
-To calculate the average customer rating for Technical category tickets, we need to filter the data for the Technical category and then calculate the mean of the customer_rating column.
-
-Based on the provided dataset, there are two tickets in the Technical category: TKT-006 and TKT-010. However, TKT-010 is still open and does not have a customer rating.
-
-For TKT-006, the customer rating is 2.0.
-
-Since there is only one ticket with a customer rating in the Technical category, the average customer rating is 2.0.
-
-Query 5
-
-Input
-Are there any anomalies in resolution times this week?
-
-Output
-There is one anomaly in resolution times this week, which is ticket TKT-006 with a resolution time of 34.1 hours. This is significantly higher than the mean resolution time for the week.
-
-Please note that this analysis is based on the assumption that the dataset is representative of the population and that the current week is the week ending on '2024-03-25'. The actual anomalies may vary depending on the current date and the actual dataset.
+---
 
 
-## Anomaly rules (implemented)
+## Features
 
-- Unresolved high-priority tickets: `priority` in [`High`, `Critical`] and `status` != `Resolved`.
-- Long resolution times: `resolution_time_hrs` > mean + 2*std (computed over non-null values).
+### Natural Language Querying
 
-## Implementation notes
+Ask questions about support tickets in plain English, such as:
 
-- `query_engine.py` reads the dataset and includes sample rows in the prompt sent to Groq. The model used and temperature are set there.
-- `streamlit_ui.py` uses `API_URL = "http://localhost:8000"`. Change this if the API runs elsewhere.
-- No authentication is implemented; do not expose this server publicly without adding auth and rate limits.
+* How many critical tickets are unresolved?
+* Which agent resolved the most tickets?
+* What is the average customer satisfaction rating?
+* Show all high-priority unresolved tickets.
 
-## Troubleshooting
+### AI-Powered Analytics
 
-- If Streamlit shows connection errors, ensure the FastAPI server is running and `API_URL` matches the server address.
-- If Groq authentication fails, verify `GROQ_API_KEY` in `.env` and restart the server.
-- For large CSVs, consider sampling or adding pagination in the query prompt to avoid very long prompts.
+Uses Groq-hosted Llama 3.3 70B model through LangChain to analyze ticket data and generate human-readable responses.
+
+### Anomaly Detection
+
+Automatically identifies:
+
+* Tickets with unusually long resolution times
+* Outlier tickets based on statistical thresholds
+
+### REST API Support
+
+Provides FastAPI endpoints for:
+
+* Asking questions
+* Retrieving anomaly reports
+
+### Interactive Dashboard
+
+Streamlit-based user interface for:
+
+* Querying ticket data
+* Viewing detected anomalies
 
 ---
 
-Want a sample `support_tickets.csv` file, pinned `requirements.txt` versions, or a tiny test script to exercise the API? Tell me which and I'll add it.
+# Architecture
+
+```text
+                    ┌─────────────────┐
+                    │ Support Tickets │
+                    │      CSV        │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │   Data Loader   │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │ Pandas DataFrame│
+                    └───────┬─────────┘
+                            │
+          ┌─────────────────┴─────────────────┐
+          │                                   │
+          ▼                                   ▼
+┌──────────────────┐              ┌──────────────────┐
+│  Query Engine    │              │ Anomaly Detector │
+│ (LangChain Agent)│              │ Statistical Rule │
+└────────┬─────────┘              └────────┬─────────┘
+         │                                 │
+         ▼                                 ▼
+ ┌────────────────┐              ┌─────────────────┐
+ │ Groq Llama 3.3 │              │ Anomaly Results │
+ └────────────────┘              └─────────────────┘
+                 │
+                 ▼
+          ┌─────────────┐
+          │  FastAPI    │
+          └──────┬──────┘
+                 │
+                 ▼
+          ┌─────────────┐
+          │ Streamlit UI│
+          └─────────────┘
+```
+
+---
+
+# Project Structure
+
+```text
+project/
+│
+├── app.py
+├── data_loader.py
+├── query_engine.py
+├── anomaly_detector.py
+├── requirements.txt
+├── streamlit_ui.py
+│
+├── Data_set/
+│   └── support_tickets.csv
+│
+└── .env
+```
+
+---
+
+# Technology Stack
+
+| Component              | Technology              |
+| ---------------------- | ----------------------- |
+| Backend API            | FastAPI                 |
+| Frontend               | Streamlit               |
+| Data Processing        | Pandas                  |
+| LLM Provider           | Groq                    |
+| LLM Model              | Llama 3.3 70B Versatile |
+| AI Framework           | LangChain               |
+| Environment Management | python-dotenv           |
+
+---
+
+# Model and Tools Used
+
+## Large Language Model
+
+**Model:** llama-3.3-70b-versatile
+
+Used via Groq API for:
+
+* Natural language understanding
+* DataFrame reasoning
+* Analytical responses
+
+## LangChain Pandas Agent
+
+The application uses:
+
+```python
+create_pandas_dataframe_agent()
+```
+
+This enables the LLM to:
+
+* Inspect ticket data
+* Execute DataFrame operations
+* Answer analytical questions
+
+## Statistical Anomaly Detection
+
+Anomalies are detected using:
+
+```python
+threshold = mean + (2 × standard deviation)
+```
+
+Tickets exceeding this threshold are flagged as:
+
+```text
+Long Resolution Time
+```
+
+---
+
+
+# API Endpoints
+
+## Health Endpoint
+
+```http
+GET /
+```
+
+Response:
+
+```json
+{
+  "message": "AI Assistant for Ticket Support"
+}
+```
+
+---
+
+## Ask Question
+
+```http
+POST /ask
+```
+
+Request:
+
+```json
+{
+  "question": "Which agent resolved the most tickets?"
+}
+```
+
+Response:
+
+```json
+{
+  "question": "Which agent resolved the most tickets?",
+  "answer": "Agent AGT-09 resolved the most tickets."
+}
+```
+
+---
+
+## Get Anomalies
+
+```http
+GET /anomalies
+```
+
+Response:
+
+```json
+{
+  "count": 3,
+  "anomalies": [
+    {
+      "ticket_id": "TKT-101",
+      "type": "Long Resolution Time"
+    }
+  ]
+}
+```
+
+---
+
+# Example Queries
+
+## Example 1
+
+Question:
+
+```text
+How many tickets are currently open?
+```
+
+Output:
+
+```text
+There are 111 tickets that are currently open.
+```
+
+---
+
+## Example 2
+
+Question:
+
+```text
+Which agent resolved the most tickets this month?
+```
+
+Output:
+
+```text
+AGT-09 and AGT-12 resolved the most tickets, with 37 tickets each.
+```
+
+---
+
+## Example 3
+
+Question:
+
+```text
+Show me all Critical tickets not resolved within 12 hours
+```
+
+Output:
+
+```text
+There are 3 Critical tickets that were not resolved within 12 hours.
+```
+
+---
+
+## Example 4
+
+Question:
+
+```text
+What is the average customer rating for Technical category tickets?
+```
+
+Output:
+
+```text
+The average customer rating for Technical category tickets is 3.74.
+```
+## Example 5
+
+Question:
+
+```text
+Are there any anomalies in resolution times this week?
+```
+
+Output:
+
+```text
+There are 2 anomalies in resolution times this week, with ticket IDs TKT-108 and TKT-130 having resolution times greater than 2 standard deviations above the mean.
+```
+---
+
+# How Anomaly Detection Works
+
+The anomaly detector:
+
+1. Calculates mean resolution time.
+2. Calculates standard deviation.
+3. Creates a threshold:
+
+```text
+Threshold = Mean + (2 × Standard Deviation)
+```
+
+4. Flags tickets exceeding the threshold.
+5. Returns ticket ID and anomaly type.
+
+---
+
+# Known Limitations
+
+### Limited Anomaly Types
+
+Currently detects only:
+
+* Long resolution time outliers
+
+Future versions can include:
+
+* High-priority unresolved tickets
+* SLA violations
+* Reopened tickets
+* Agent performance anomalies
+
+### DataFrame Agent Dependency
+
+Responses depend entirely on the provided dataset.
+
+If information is not present in the CSV, the system returns:
+
+```text
+I cannot find this information in the ticket dataset.
+```
+
+### Memory Constraints
+
+Large datasets may increase:
+
+* Query latency
+* Memory consumption
+
+### CSV-Based Storage
+
+Current version operates only on CSV files.
+
+Database integration is not yet implemented.
+
+
+---
+# Summary
+
+AI Assistant for Ticket Support is a Generative AI-powered analytics solution designed to simplify the exploration and analysis of customer support ticket data. By combining FastAPI, Streamlit, Pandas, LangChain, and Groq's Llama 3.3 model, the application enables users to interact with ticket datasets using natural language instead of traditional query languages.
+
+The system supports intelligent ticket analysis through a conversational interface, allowing users to ask business-oriented questions such as ticket counts, agent performance metrics, resolution trends, and customer support insights. Additionally, it includes an anomaly detection module that automatically identifies tickets with unusually long resolution times using statistical analysis.
+
+The solution demonstrates the practical application of Large Language Models (LLMs) for enterprise data analytics by transforming structured CSV data into an AI-driven question-answering system. Its modular architecture ensures easy extensibility for future enhancements such as advanced anomaly detection, vector search, Retrieval-Augmented Generation (RAG), real-time monitoring, and database integration.
+
+This project showcases how Generative AI can improve operational visibility, reduce manual analysis efforts, and enable faster decision-making within customer support environments.
+
+
+
+

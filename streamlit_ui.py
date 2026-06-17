@@ -51,49 +51,20 @@ if st.button("Ask"):
 # Anomaly Detection Section
 # -------------------------
 
-st.divider()
-
-st.subheader("Anomaly Detection")
+st.title("Anomaly Detection")
 
 if st.button("Show Anomalies"):
 
-    try:
+    response = requests.get(
+        "http://localhost:8000/anomalies"
+    ).json()
 
-        response = requests.get(
-            f"{API_URL}/anomalies"
-        )
+    anomalies = response["anomalies"]
 
-        if response.status_code == 200:
+    st.success(
+        f"{len(anomalies)} anomalies detected"
+    )
 
-            anomalies = response.json()
-
-            st.success(
-                f"{len(anomalies)} anomalies detected"
-            )
-
-            if len(anomalies) > 0:
-
-                df = pd.DataFrame(anomalies)
-
-                st.dataframe(
-                    df,
-                    use_container_width=True
-                )
-
-            else:
-
-                st.info(
-                    "No anomalies found."
-                )
-
-        else:
-
-            st.error(
-                f"Error: {response.status_code}"
-            )
-
-    except Exception as e:
-
-        st.error(
-            f"Connection Error: {str(e)}"
-        )
+    st.dataframe(
+        pd.DataFrame(anomalies)
+    )

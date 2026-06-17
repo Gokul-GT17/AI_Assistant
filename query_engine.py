@@ -1,46 +1,63 @@
 import os
-import pandas as pd
 from dotenv import load_dotenv
-
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
+
 
 load_dotenv()
 
-df = pd.read_csv("Data_set\\support_tickets.csv")
 
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    groq_api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0
-)
+class QueryEngine:
 
-prompt = ChatPromptTemplate.from_template("""
-You are a customer support analyst.
+    def __init__(self, df):
 
-Dataset Columns:
-{columns}
+        self.df = df
 
-Sample Data:
-{sample_data}
+        self.llm = ChatGroq(
+            model="llama-3.3-70b-versatile",
+            temperature=0
+        )
 
-Question:
-{question}
+        self.agent = create_pandas_dataframe_agent(
+            llm=self.llm,
+            df=self.df,
+            verbose=True,
+            allow_dangerous_code=True,
+            prefix="""
+You are a customer support ticket analytics assistant.
 
-Answer based on the dataset.
+The dataframe is named df.
+
+Available columns:
+ticket_id
+created_at
+category
+priority
+status
+response_time_hrs
+resolution_time_hrs
+agent_id
+customer_rating
+issue_summary
+
+Valid status values:
+Open
+Resolved
+Escalated
+
+Valid priority values:
+Low
+Medium
+High
+Critical
+
+Always use Python pandas operations on df to answer.
+Never guess.
+Always calculate the answer from the dataframe.
+Return concise natural language answers.
 """)
+    def ask(self, question):
 
-chain = prompt | llm
+     result = self.agent.invoke(question)
 
-
-def answer_question(question):
-
-    response = chain.invoke(
-        {
-            "columns": df.columns.tolist(),
-            "sample_data": df.head(10).to_string(),
-            "question": question
-        }
-    )
-
-    return response.content
+     return result["output"]
