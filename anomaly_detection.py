@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv("support_tickets.csv")
+df = pd.read_csv("Data_set\\support_tickets.csv")
 
 def detect_anomalies():
 
