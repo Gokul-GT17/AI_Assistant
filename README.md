@@ -445,10 +445,10 @@ Database integration is not yet implemented.
 ---
 # Summary
 
-AI Assistant for Ticket Support is a Generative AI-powered analytics solution designed to simplify the exploration and analysis of customer support ticket data. By combining FastAPI, Streamlit, Pandas, LangChain, and Groq's Llama 3.3 model, the application enables users to interact with ticket datasets using natural language instead of traditional query languages.
+AI Assistant for Ticket Support is a Generative AI-powered analytics application that enables users to interact with customer support ticket data using natural language. The solution combines FastAPI, Streamlit, Pandas, LangChain, and Groq's Llama 3.3 model to provide an intuitive interface for querying ticket datasets and generating actionable insights.
 
-The system supports intelligent ticket analysis through a conversational interface, allowing users to ask business-oriented questions such as ticket counts, agent performance metrics, resolution trends, and customer support insights. Additionally, it includes an anomaly detection module that automatically identifies tickets with unusually long resolution times using statistical analysis.
+The application loads support ticket data from a CSV file and makes it queryable through a LangChain Pandas DataFrame Agent. Users can ask business-oriented questions regarding ticket status, agent performance, resolution metrics, and operational trends without writing SQL or Pandas queries.
 
-The solution demonstrates the practical application of Large Language Models (LLMs) for enterprise data analytics by transforming structured CSV data into an AI-driven question-answering system. Its modular architecture ensures easy extensibility for future enhancements such as advanced anomaly detection, vector search, Retrieval-Augmented Generation (RAG), real-time monitoring, and database integration.
+In addition to natural language analytics, the system includes an anomaly detection module that identifies tickets with unusually long resolution times using statistical threshold-based analysis. The architecture is lightweight, modular, and easy to extend for additional analytics and anomaly detection capabilities.
 
-This project showcases how Generative AI can improve operational visibility, reduce manual analysis efforts, and enable faster decision-making within customer support environments.
+This project demonstrates the practical use of Large Language Models (LLMs) for structured data analysis by transforming tabular ticket data into an AI-powered conversational analytics experience.
