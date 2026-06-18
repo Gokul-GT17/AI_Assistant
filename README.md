@@ -442,7 +442,6 @@ Current version operates only on CSV files.
 
 Database integration is not yet implemented.
 
-
 ---
 # Summary
 
@@ -453,7 +452,3 @@ The system supports intelligent ticket analysis through a conversational interfa
 The solution demonstrates the practical application of Large Language Models (LLMs) for enterprise data analytics by transforming structured CSV data into an AI-driven question-answering system. Its modular architecture ensures easy extensibility for future enhancements such as advanced anomaly detection, vector search, Retrieval-Augmented Generation (RAG), real-time monitoring, and database integration.
 
 This project showcases how Generative AI can improve operational visibility, reduce manual analysis efforts, and enable faster decision-making within customer support environments.
-
-
-
-
